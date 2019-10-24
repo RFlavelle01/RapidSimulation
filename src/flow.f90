@@ -94,6 +94,8 @@ contains
 
        t = 280d0
 
+
+!d is density 
        d = 1.266d0
        p = d*rgas*t
 

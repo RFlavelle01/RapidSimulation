@@ -40,7 +40,7 @@ module equations_module
 
   real   (kind=RP), parameter :: nul = 0.0000155d0
 
-  real   (kind=RP), parameter :: pr  = 0.71d0
+  real   (kind=RP), parameter :: pr  = 0.72d0
 
   ! Set some major geometric parameters
 
