@@ -19,8 +19,9 @@
 module equations_module
 
   ! Declare modules
-
+  
   use precision
+ 
 
   implicit none
 
@@ -40,7 +41,7 @@ module equations_module
 
   real   (kind=RP), parameter :: nul = 0.0000155d0
 
-  real   (kind=RP), parameter :: pr  = 0.72d0
+  real   (kind=RP), parameter :: pr  = 0.71d0
 
   ! Set some major geometric parameters
 
@@ -600,18 +601,22 @@ contains
   !*******************************************************************
   !*******************************************************************
 
-  function sources(q, vol) result(s)
+  function sources(f, vol) result(s)
 
     implicit none
 
     ! Declare variables
 
-    real   (kind=RP) :: q(npdes), vol(1), s(npdes)
+    real   (kind=RP) :: f(npdes), vol(1), s(npdes)
 
     ! Set the source terms (multiply by volume since this is an FV code)
 
-    s(:) = 0d0 * vol(1)
-
+    s(1) = 0d0  *vol(1)
+    s(2) = f(2) *vol(1)
+    s(3) = f(3) *vol(1)
+    s(4) = f(4) *vol(1)
+    s(5) = 0    *vol(1)
+    
     ! Return
 
     return

@@ -300,7 +300,7 @@ contains
     do j = 1, mesh%ncj
     do i = 1, mesh%nci
 
-       flow%res(:,i,j,k) = flow%res(:,i,j,k) + sources(flow%q(:,i,j,k), mesh%vol(:,i,j,k))
+       flow%res(:,i,j,k) = flow%res(:,i,j,k) + sources(flow%force(:,i,j,k), mesh%vol(:,i,j,k))
 
     end do
     end do
