@@ -39,7 +39,7 @@ program regular_rectilinear
   nx = 200
   ny = 80
   nz = 80
-
+  
   ! Set the domain of the mesh
 
   lx = 12d0 * 4d0 * atan(1d0)
@@ -53,14 +53,47 @@ program regular_rectilinear
   ! Set up the coordinates
 
   do ix = 1, nx
-     xo(ix) = (ix-1)*lx / dble(nx-1) - 0.5d0*lx
+    xo(ix) = (ix-1)*lx / dble(nx-1) - 0.5d0*lx
+!    xo(ix) = (ix-dble((nx+1)/2))**3 * (1/dble((nx+1)/2 -1)**3 * 0.5d0 *lx) 
   end do
+
   do iy = 1, ny
-     yo(iy) = (iy-1)*ly / dble(ny-1) - 0.5d0*ly
+    yo(iy) = (iy-1)*ly / dble(ny-1) - 0.5d0*ly
+   
+   !if ( iy <= (ny+1)/4) then
+      
+    ! yo(iy) = (iy-1)*(ly/3)/((ny+1)*0.25d0-1)-(ly*0.5d0)
+
+  !else if (iy > (ny+1)/4 .AND. iy <= (ny+1)*3/4) then
+
+   !  yo(iy) = (iy-((ny+1)/4))*(ly/3)/((ny+1)*0.25d0)*0.5d0 - (ly*0.5d0/3)
+
+  !else 
+
+   !  yo(iy) = (iy-((ny+1)*3/4))*(ly/3)/((ny+1)*0.25d0-1)+(ly/6)
+
+  !end if   
   end do
+
+
   do iz = 1, nz
-     zo(iz) = (iz-1)*lz / dble(nz-1) - 0.5d0*lz
-  end do
+    zo(iz) = (iz-1)*lz / dble(nz-1) - 0.5d0*lz
+    
+   !    if ( iz <= (nz+1)/4) then
+      
+    ! zo(iz) = (iz-1)*(lz/3)/((nz+1)*0.25d0-1)-(lz*0.5d0)
+
+  !else if (iz > (nz+1)/4 .AND. iz <= (nz+1)*3/4) then
+
+   !  zo(iz) = (iz-((nz+1)/4))*(lz/3)/((nz+1)*0.25d0)*0.5d0 - (lz*0.5d0/3)
+
+  !else 
+
+   !  zo(iz) = (iz-((nz+1)*3/4))*(lz/3)/((nz+1)*0.25d0-1)+(lz/6)
+
+ ! end if 
+
+ end do
 
   ! Write out the coordinates
 

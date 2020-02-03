@@ -62,15 +62,18 @@ program rectilinear
 
      call work_fluxes()
 
-     ! 
+     ! Call IBM force constructor 
      
-     Call force_constructor
-
+     call force_constructor
 
      ! Compute any source terms
 
      call work_sources()
 
+     ! Compute the nearest wall distance d
+     
+     call work_walldist()
+      
      ! Set the time steps
 
      call work_timestep()
@@ -82,7 +85,7 @@ program rectilinear
      ! Print the timestep number
 
      write(6,*) it
-
+     
   end do
   
   ! ******************************* !
@@ -94,15 +97,16 @@ program rectilinear
 
   call write_plot3d()
   
-do k=1, mesh%nck
-do j=1, mesh%ncj
-do i=1, mesh%nci
+  do k=1, mesh%nck
+  do j=1, mesh%ncj
+  do i=1, mesh%nci
 
-write(19,*) flow%ibm(1,i,j,k), flow%force(2,i,j,k), flow%force(3,i,j,k), flow%force(4,i,j,k)
+     !write(19,*) mesh%x(1,i,j,k), mesh%x(2,i,j,k), mesh%x(3,i,j,k), flow%inter(1,i,j,k), flow%ibm(1,i,j,k) 
+     write(19, *) flow%inter(1,i,j,k), flow%ibm(1,i,j,k)
 
-end do 
-end do
-end do
+  end do
+  end do
+  end do
 
 end program rectilinear
 

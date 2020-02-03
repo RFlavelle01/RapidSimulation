@@ -207,7 +207,11 @@ contains
     do j = 1, mesh%ncj
     do i = 1, mesh%nci
 
-       mesh%dt(:,i,j,k) = 0.25d0*mesh%dx(1,i,j,k) / lambda(flow%u(:,i,j,k))
+       mesh%dt(1:5,i,j,k) = 0.125d0*mesh%dx(1,i,j,k) / lambda(flow%u(1:5,i,j,k))
+       
+       ! Tripling timestep for the wall distance calculations
+
+       mesh%dt(6:9,i,j,k) = 3.375d0*mesh%dx(1,i,j,k) /lambda(flow%u(6:9,i,j,k))
 
     end do
     end do
@@ -230,9 +234,10 @@ contains
     do j = 1, mesh%ncj
     do i = 1, mesh%nci
 
-!!       flow%u(:,i,j,k) = flow%u(:,i,j,k) + mesh%dt(1,i,j,k) * flow%res(:,i,j,k) / mesh%vol(1,i,j,k)
-       flow%u(:,i,j,k) = flow%u(:,i,j,k) + 0.00005d0 * flow%res(:,i,j,k) / mesh%vol(1,i,j,k)
-
+       flow%u(1:5,i,j,k) = flow%u(1:5,i,j,k) + mesh%dt(1:5,i,j,k) * flow%res(1:5,i,j,k) / mesh%vol(1,i,j,k)
+       flow%u(6:9,i,j,k) = flow%u(6:9,i,j,k) + mesh%dt(6:9,i,j,k) * flow%res(6:9,i,j,k) / mesh%vol(1,i,j,k)
+      ! flow%u(1:5,i,j,k) = flow%u(1:5,i,j,k) + 0.0000005d0 * flow%res(1:5,i,j,k) / mesh%vol(1,i,j,k)
+      ! flow%u(6:9,i,j,k) =flow%u(6:9,i,j,k) +0.0000405d0 * flow%res(6:9,i,j,k) / mesh%vol(1,i,j,k)
     end do
     end do
     end do
@@ -293,14 +298,14 @@ contains
   subroutine work_sources()
 
     implicit none
-
+    
     ! Loop over all terms gathering the sources
 
     do k = 1, mesh%nck
     do j = 1, mesh%ncj
     do i = 1, mesh%nci
 
-       flow%res(:,i,j,k) = flow%res(:,i,j,k) + sources(flow%force(:,i,j,k), mesh%vol(:,i,j,k))
+       flow%res(:,i,j,k) = flow%res(:,i,j,k) + sources(flow%q(:,i,j,k),flow%force(:,i,j,k), mesh%vol(:,i,j,k))
 
     end do
     end do

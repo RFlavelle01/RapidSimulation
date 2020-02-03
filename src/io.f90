@@ -64,6 +64,8 @@ contains
 
     integer(kind=IP) :: ipde
 
+    real(kind=rp) :: temp(7,mesh%nci,mesh%ncj,mesh%nck)
+   
     ! Write the mesh
 
     open(unit=13, file="flow.xyz", form="unformatted")
@@ -88,6 +90,24 @@ contains
     ! Close flow file
     
     close(14)
+
+    ! Write the wall distance functions u,p,q,r, temp 5,6 are wall distance
+    temp(1,:,:,:) = flow%u(6,:,:,:)
+    temp(2,:,:,:) = flow%u(7,:,:,:)
+    temp(3,:,:,:) = flow%u(8,:,:,:)
+    temp(4,:,:,:) = flow%u(9,:,:,:)
+    temp(5,:,:,:) = flow%d(1,:,:,:)
+    temp(6,:,:,:) = flow%d(2,:,:,:)
+    
+    open(unit=15, file="flow.f", form="unformatted")
+
+    write(15) 1
+    write(15) mesh%nci-2, mesh%ncj-2, mesh%nck-2, 6
+    write(15) ((((temp(ipde,i,j,k), i=2, mesh%nci-1), j=2, mesh%ncj-1), k=2, mesh%nck-1), ipde=1,6)
+
+  ! Close the flow file
+    
+    close(15)
 
     ! Return to calling program
 
@@ -127,7 +147,7 @@ contains
 
   !*******************************************************************
   !*******************************************************************
-
+  
   subroutine write_restart()
 
     implicit none

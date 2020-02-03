@@ -25,9 +25,9 @@ module equations_module
 
   implicit none
 
-  ! Set the number of equations
+  ! Set the number of equations - increased form 5 to 9 for wall distance computation
 
-  integer(kind=IP), parameter :: npdes = 5
+  integer(kind=IP), parameter :: npdes = 9
 
   ! Set some major flow parameters
 
@@ -68,6 +68,13 @@ contains
     q(3) = u(3) / q(1)
     q(4) = u(4) / q(1)
     q(5) = gm1*(u(5) - 0.5d0*q(1)*(q(2)*q(2)+q(3)*q(3)+q(4)*q(4)))
+
+    !Wall distances
+
+    q(6) = u(6)
+    q(7) = u(7)
+    q(8) = u(8)
+    q(9) = u(9)
 
     ! Return cleanly
 
@@ -126,9 +133,13 @@ contains
 
     real(kind=RP) :: q(npdes), qp(npdes,3), smij(3,3), tij(3,3), qx, tx, mul
 
-    real(kind=RP) :: HL, HR, RT, umix, vmix, wmix, Hmix, amix, smax, vall
+    real(kind=RP) :: HL, HR, RT, umix, vmix, wmix, Hmix, amix, smax, vall, smth
 
     integer(kind=IP) :: ipde, i, j
+
+    ! Turbulence variables
+
+    real(kind=RP) :: L, mut, rij(3,3), qtx, sumsmij
 
     ! Set the wave speeds in the relevant direction (Rusanov)
 
@@ -147,14 +158,24 @@ contains
     amix = sqrt(gm1*(Hmix - 0.5d0*(vall*vall)))
 
     smax = abs(vall) + amix
+    
+    smth = 0.90d0
 
     ! Set the fluxes
 
-    f(1) = 0.5d0*(qL(1)*qL(2)               + (qR(1)*qR(2)              )) - 0.5d0*smax*(uR(1)-uL(1))
-    f(2) = 0.5d0*(qL(1)*qL(2)*qL(2) + qL(5) + (qR(1)*qR(2)*qR(2) + qR(5))) - 0.5d0*smax*(uR(2)-uL(2))
-    f(3) = 0.5d0*(qL(1)*qL(2)*qL(3)         + (qR(1)*qR(2)*qR(3)        )) - 0.5d0*smax*(uR(3)-uL(3))
-    f(4) = 0.5d0*(qL(1)*qL(2)*qL(4)         + (qR(1)*qR(2)*qR(4)        )) - 0.5d0*smax*(uR(4)-uL(4))
-    f(5) = 0.5d0*(qL(1)*qL(2)*HL            + (qR(1)*qR(2)*HR           )) - 0.5d0*smax*(uR(5)-uL(5))
+    f(1) = 0.5d0*(qL(1)*qL(2)               + (qR(1)*qR(2)              )) - smth*smax*(uR(1)-uL(1))
+    f(2) = 0.5d0*(qL(1)*qL(2)*qL(2) + qL(5) + (qR(1)*qR(2)*qR(2) + qR(5))) - smth*smax*(uR(2)-uL(2))
+    f(3) = 0.5d0*(qL(1)*qL(2)*qL(3)         + (qR(1)*qR(2)*qR(3)        )) - smth*smax*(uR(3)-uL(3))
+    f(4) = 0.5d0*(qL(1)*qL(2)*qL(4)         + (qR(1)*qR(2)*qR(4)        )) - smth*smax*(uR(4)-uL(4))
+    f(5) = 0.5d0*(qL(1)*qL(2)*HL            + (qR(1)*qR(2)*HR           )) - smth*smax*(uR(5)-uL(5))
+
+
+    !Wall distance
+
+    f(6) = -(0.5d0*(qL(7)+qR(7)))
+    f(7) = -0.5d0*(qL(6)+qR(6))
+    f(8) = 0d0
+    f(9) = 0d0
 
     ! Get the mean gradients
 
@@ -195,13 +216,43 @@ contains
 
     qx = -(mul / pr) * tx
 
-    ! Add on the viscous terms
+    ! Turbulence modelling
 
-    f(1) = f(1)!
-    f(2) = f(2)! - tij(1,1)
-    f(3) = f(3)! - tij(1,2)
-    f(4) = f(4)! - tij(1,3)
-    f(5) = f(5)! - q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx
+    ! Set the length scale
+
+    L = 0.09
+    
+    ! L = 0.41 *flow%d - to be developed later
+
+    ! Compute turbulent eddy viscosity
+
+    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
+    
+    mut  = q(1) * sqrt( L**2 * 2 *sumsmij)
+
+    ! Calculate the Reynolds stress tensor
+    
+    do j = 1, 3
+    do i = 1, 3
+       rij(i,j) = 2 * mut * smij(i,j)
+    end do
+    end do
+    
+    ! Find the turbulent diffusion of heat
+    
+    qtx = -(mut / pr) * tx
+
+    ! Add on the viscous terms + zero equation turbulence terms
+
+    f(1) = f(1)
+    f(2) = f(2) - tij(1,1) - rij(1,1)
+    f(3) = f(3) - tij(1,2) - rij(1,2)
+    f(4) = f(4) - tij(1,3) - rij(1,3)
+    f(5) = f(5) - q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx + qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
+    f(6) = f(6)
+    f(7) = f(7)
+    f(8) = f(8)
+    f(9) = f(9)
 
     ! And dot with the normals
 
@@ -230,9 +281,13 @@ contains
 
     real(kind=RP) :: q(npdes), qp(npdes,3), smij(3,3), tij(3,3), qy, ty, mul
 
-    real(kind=RP) :: HL, HR, RT, umix, vmix, wmix, Hmix, amix, smax, vall
+    real(kind=RP) :: HL, HR, RT, umix, vmix, wmix, Hmix, amix, smax, vall, smth
 
     integer(kind=IP) :: ipde, i, j
+
+    ! Turbulence variables
+
+    real(kind=RP) :: L, mut, rij(3,3), qty, sumsmij
 
     ! Set the wave speeds in the relevant direction (Rusanov)
 
@@ -252,14 +307,23 @@ contains
 
     smax = abs(vall) + amix
 
+    smth = 0.90d0
+
     ! Set the fluxes
 
-    g(1) = 0.5d0*(qL(1)*qL(3)               + (qR(1)*qR(3)              )) - 0.5d0*smax*(uR(1)-uL(1))
-    g(2) = 0.5d0*(qL(1)*qL(3)*qL(2)         + (qR(1)*qR(3)*qR(2)        )) - 0.5d0*smax*(uR(2)-uL(2))
-    g(3) = 0.5d0*(qL(1)*qL(3)*qL(3) + qL(5) + (qR(1)*qR(3)*qR(3) + qR(5))) - 0.5d0*smax*(uR(3)-uL(3))
-    g(4) = 0.5d0*(qL(1)*qL(3)*qL(4)         + (qR(1)*qR(3)*qR(4)        )) - 0.5d0*smax*(uR(4)-uL(4))
-    g(5) = 0.5d0*(qL(1)*qL(3)*HL            + (qR(1)*qR(3)*HR           )) - 0.5d0*smax*(uR(5)-uL(5))
-
+    g(1) = 0.5d0*(qL(1)*qL(3)               + (qR(1)*qR(3)              )) - smth*smax*(uR(1)-uL(1))
+    g(2) = 0.5d0*(qL(1)*qL(3)*qL(2)         + (qR(1)*qR(3)*qR(2)        )) - smth*smax*(uR(2)-uL(2))
+    g(3) = 0.5d0*(qL(1)*qL(3)*qL(3) + qL(5) + (qR(1)*qR(3)*qR(3) + qR(5))) - smth*smax*(uR(3)-uL(3))
+    g(4) = 0.5d0*(qL(1)*qL(3)*qL(4)         + (qR(1)*qR(3)*qR(4)        )) - smth*smax*(uR(4)-uL(4))
+    g(5) = 0.5d0*(qL(1)*qL(3)*HL            + (qR(1)*qR(3)*HR           )) - smth*smax*(uR(5)-uL(5))
+    
+    !Wall distances 
+   
+    g(6) = -(0.5d0*(qL(8)+qR(8)))
+    g(7) = 0d0
+    g(8) = -0.5d0*(qL(6)+qR(6))
+    g(9) = 0d0
+ 
     ! Get the mean gradients
 
     do ipde = 1, npdes
@@ -299,13 +363,43 @@ contains
 
     qy = -(mul / pr) * ty
 
-    ! Add on the viscous terms
+    ! Turbulence modelling
 
-    g(1) = g(1)!
-    g(2) = g(2)! - tij(2,1)
-    g(3) = g(3)! - tij(2,2)
-    g(4) = g(4)! - tij(2,3)
-    g(5) = g(5)! - q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy
+    ! Set the length scale
+
+    L = 0.09
+    
+    ! L = 0.41 * d - to be developed later
+
+    ! Compute turbulent eddy viscosity
+
+    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
+
+    mut = q(1) * sqrt(L**2 * 2 * sumsmij)
+
+    ! Calculate the Reynolds stress tensor
+    
+    do j = 1, 3
+    do i = 1, 3
+       rij(i,j) = 2 * mut * smij(i,j)
+    end do
+    end do
+    
+    ! Find the turbulent diffusion of heat
+    
+    qty = -(mut / pr) * ty
+
+    ! Add on the viscous terms + turbulent stresses
+
+    g(1) = g(1)
+    g(2) = g(2) - tij(2,1) - rij(2,1)
+    g(3) = g(3) - tij(2,2) - rij(2,2)
+    g(4) = g(4) - tij(2,3) - rij(2,3)
+    g(5) = g(5) - q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy + qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
+    g(6) = g(6)
+    g(7) = g(7)
+    g(8) = g(8)
+    g(9) = g(9)
 
     ! And dot with the normals
 
@@ -330,9 +424,13 @@ contains
 
     real(kind=RP) :: q(npdes), qp(npdes,3), smij(3,3), tij(3,3), qz, tz, mul
 
-    real(kind=RP) :: HL, HR, RT, umix, vmix, wmix, Hmix, amix, smax, vall
+    real(kind=RP) :: HL, HR, RT, umix, vmix, wmix, Hmix, amix, smax, vall, smth
 
     integer(kind=IP) :: ipde, i, j
+
+    ! Turbulence variables
+
+    real(kind=RP) :: L, mut, rij(3,3), qtz, sumsmij
 
     ! Set the wave speeds in the relevant direction (Rusanov)
 
@@ -352,14 +450,23 @@ contains
 
     smax = abs(vall) + amix
 
+    smth = 0.90d0
+
     ! Set the fluxes
 
-    h(1) = 0.5d0*(qL(1)*qL(4)               + (qR(1)*qR(4)              )) - 0.5d0*smax*(uR(1)-uL(1))
-    h(2) = 0.5d0*(qL(1)*qL(4)*qL(2)         + (qR(1)*qR(4)*qR(2)        )) - 0.5d0*smax*(uR(2)-uL(2))
-    h(3) = 0.5d0*(qL(1)*qL(4)*qL(3)         + (qR(1)*qR(4)*qR(3)        )) - 0.5d0*smax*(uR(3)-uL(3))
-    h(4) = 0.5d0*(qL(1)*qL(4)*qL(4) + qL(5) + (qR(1)*qR(4)*qR(4) + qR(5))) - 0.5d0*smax*(uR(4)-uL(4))
-    h(5) = 0.5d0*(qL(1)*qL(4)*HL            + (qR(1)*qR(4)*HR           )) - 0.5d0*smax*(uR(5)-uL(5))
-
+    h(1) = 0.5d0*(qL(1)*qL(4)               + (qR(1)*qR(4)              )) - smth*smax*(uR(1)-uL(1))
+    h(2) = 0.5d0*(qL(1)*qL(4)*qL(2)         + (qR(1)*qR(4)*qR(2)        )) - smth*smax*(uR(2)-uL(2))
+    h(3) = 0.5d0*(qL(1)*qL(4)*qL(3)         + (qR(1)*qR(4)*qR(3)        )) - smth*smax*(uR(3)-uL(3))
+    h(4) = 0.5d0*(qL(1)*qL(4)*qL(4) + qL(5) + (qR(1)*qR(4)*qR(4) + qR(5))) - smth*smax*(uR(4)-uL(4))
+    h(5) = 0.5d0*(qL(1)*qL(4)*HL            + (qR(1)*qR(4)*HR           )) - smth*smax*(uR(5)-uL(5))
+    
+    !Wall distances
+    
+    h(6) = -(0.5d0*(qL(9)+qR(9)))
+    h(7) = 0d0
+    h(8) = 0d0
+    h(9) = -0.5d0*(qL(6)+qR(6))
+    
     ! Get the mean gradients
 
     do ipde = 1, npdes
@@ -399,13 +506,43 @@ contains
 
     qz = -(mul / pr) * tz
 
+    ! Turbulence modelling
+
+    ! Set the length scale
+
+    L = 0.09
+    
+    ! L = 0.41 * d - to be developed later
+
+    ! Compute turbulent eddy viscosity
+
+    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
+
+    mut = q(1) * sqrt(L**2 * 2 * sumsmij)
+
+    ! Calculate the Reynolds stress tensor
+    
+    do j = 1, 3
+    do i = 1, 3
+       rij(i,j) = 2 * mut * smij(i,j)
+    end do
+    end do
+    
+    ! Find the turbulent diffusion of heat
+    
+    qtz = -(mut / pr) * tz
+
     ! Add on the viscous terms
 
-    h(1) = h(1)!
-    h(2) = h(2)! - tij(3,1)
-    h(3) = h(3)! - tij(3,2)
-    h(4) = h(4)! - tij(3,3)
-    h(5) = h(5)! - q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz
+    h(1) = h(1)
+    h(2) = h(2) - tij(3,1) - rij(3,1)
+    h(3) = h(3) - tij(3,2) - rij(3,2)
+    h(4) = h(4) - tij(3,3) - rij(3,3)
+    h(5) = h(5) - q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz + qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
+    h(6) = h(6)
+    h(7) = h(7)
+    h(8) = h(8)
+    h(9) = h(9)
 
     ! And dot with the normals
 
@@ -491,6 +628,13 @@ contains
     uBn(3) = rb*vb
     uBn(4) = rb*wb
     uBn(5) = rb*eb
+    
+    !Wall distances
+ 
+    uBn(6) = -uIn(6)
+    uBn(7) = uIn(7)
+    uBn(8) = uIn(8)
+    uBn(9) = uIn(9)
 
     ! Return cleanly
 
@@ -541,9 +685,16 @@ contains
     uBn(3) = rb*vb
     uBn(4) = rb*wb
     uBn(5) = rb*eb
+    
+    ! Wall distances
+
+    uBn(6) = -uIn(6)
+    uBn(7) = uIn(7)
+    uBn(8) = uIn(8)
+    uBn(9) = uIn(9)
 
     ! Return cleanly
-
+   
     return
 
   end function bc_type_b
@@ -596,18 +747,25 @@ contains
     uBn(4) = rb*wb
     uBn(5) = rb*eb
 
+    ! Wall distances
+
+    uBn(6) = -uIn(6)
+    uBn(7) = uIn(7)
+    uBn(8) = uIn(8)
+    uBn(9) = uIn(9)
+
   end function bc_type_c
 
   !*******************************************************************
   !*******************************************************************
 
-  function sources(f, vol) result(s)
+  function sources(q,f,vol) result(s)
 
     implicit none
 
     ! Declare variables
 
-    real   (kind=RP) :: f(npdes), vol(1), s(npdes)
+    real   (kind=RP) :: q(npdes), f(npdes), vol(1), s(npdes)
 
     ! Set the source terms (multiply by volume since this is an FV code)
 
@@ -617,12 +775,17 @@ contains
     s(4) = f(4) *vol(1)
     s(5) = 0    *vol(1)
     
+    !Wall distances
+    s(6) = (1 + f(6))*vol(1)
+    s(7) = -q(7)*vol(1)
+    s(8) = -q(8)*vol(1)
+    s(9) = -q(9)*vol(1)
+
     ! Return
 
     return
 
   end function sources
-
 
 end module equations_module
 
