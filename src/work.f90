@@ -211,7 +211,7 @@ contains
        
        ! Tripling timestep for the wall distance calculations
 
-       mesh%dt(6:9,i,j,k) = 3.375d0*mesh%dx(1,i,j,k) /lambda(flow%u(6:9,i,j,k))
+       mesh%dt(6:9,i,j,k) = 0.125d0*mesh%dx(1,i,j,k) /1.0d0
 
     end do
     end do

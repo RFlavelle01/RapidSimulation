@@ -44,7 +44,7 @@ program rectilinear
   ! START OF THE TIME STEPPING LOOP !
   ! ******************************* !
   
-  do it = 1, 10000
+  do it = 1, 5000
 
      ! Apply the BCs
 

@@ -21,7 +21,7 @@ module equations_module
   ! Declare modules
   
   use precision
- 
+
 
   implicit none
 
@@ -220,7 +220,7 @@ contains
 
     ! Set the length scale
 
-    L = 0.09
+    L = pi / 4
     
     ! L = 0.41 *flow%d - to be developed later
 
@@ -367,7 +367,7 @@ contains
 
     ! Set the length scale
 
-    L = 0.09
+    L = pi / 4
     
     ! L = 0.41 * d - to be developed later
 
@@ -510,7 +510,7 @@ contains
 
     ! Set the length scale
 
-    L = 0.09
+    L = pi / 4
     
     ! L = 0.41 * d - to be developed later
 
