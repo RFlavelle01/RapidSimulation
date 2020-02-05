@@ -245,10 +245,10 @@ contains
     ! Add on the viscous terms + zero equation turbulence terms
 
     f(1) = f(1)
-    f(2) = f(2) - tij(1,1) - rij(1,1)
-    f(3) = f(3) - tij(1,2) - rij(1,2)
-    f(4) = f(4) - tij(1,3) - rij(1,3)
-    f(5) = f(5) - q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx + qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
+    f(2) = f(2) !- tij(1,1) - rij(1,1)
+    f(3) = f(3) !- tij(1,2) - rij(1,2)
+    f(4) = f(4) !- tij(1,3) - rij(1,3)
+    f(5) = f(5) !- q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx + qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
     f(6) = f(6)
     f(7) = f(7)
     f(8) = f(8)
@@ -391,11 +391,11 @@ contains
 
     ! Add on the viscous terms + turbulent stresses
 
-    g(1) = g(1)
-    g(2) = g(2) - tij(2,1) - rij(2,1)
-    g(3) = g(3) - tij(2,2) - rij(2,2)
-    g(4) = g(4) - tij(2,3) - rij(2,3)
-    g(5) = g(5) - q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy + qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
+    g(1) = g(1)!
+    g(2) = g(2) !- tij(2,1) - rij(2,1)
+    g(3) = g(3) !- tij(2,2) - rij(2,2)
+    g(4) = g(4) !- tij(2,3) - rij(2,3)
+    g(5) = g(5) !- q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy + qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
     g(6) = g(6)
     g(7) = g(7)
     g(8) = g(8)
@@ -534,11 +534,11 @@ contains
 
     ! Add on the viscous terms
 
-    h(1) = h(1)
-    h(2) = h(2) - tij(3,1) - rij(3,1)
-    h(3) = h(3) - tij(3,2) - rij(3,2)
-    h(4) = h(4) - tij(3,3) - rij(3,3)
-    h(5) = h(5) - q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz + qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
+    h(1) = h(1)!
+    h(2) = h(2) !- tij(3,1) - rij(3,1)
+    h(3) = h(3) !- tij(3,2) - rij(3,2)
+    h(4) = h(4) !- tij(3,3) - rij(3,3)
+    h(5) = h(5) !- q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz + qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
     h(6) = h(6)
     h(7) = h(7)
     h(8) = h(8)
