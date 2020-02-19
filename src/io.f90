@@ -132,7 +132,7 @@ contains
 
     open(unit=14, file="flow.dat", form="unformatted")
 
-    read(14) ((((flow%u(ipde,i,j,k), i=1, mesh%nci), j=1, mesh%ncj), k=1, mesh%nck), ipde=1,5)
+    read(14) ((((flow%u(ipde,i,j,k), i=1, mesh%nci), j=1, mesh%ncj), k=1, mesh%nck), ipde=1,9)
     
     ! Close flow file
     
@@ -162,7 +162,7 @@ contains
 
     open(unit=14, file="flow.dat", form="unformatted")
 
-    write(14) ((((flow%u(ipde,i,j,k), i=1, mesh%nci), j=1, mesh%ncj), k=1, mesh%nck), ipde=1,5)
+    write(14) ((((flow%u(ipde,i,j,k), i=1, mesh%nci), j=1, mesh%ncj), k=1, mesh%nck), ipde=1,9)
     
     ! Close flow file
     

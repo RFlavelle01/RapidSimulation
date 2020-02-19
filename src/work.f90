@@ -167,13 +167,13 @@ contains
 
        f = xflux(flow%u(:,i  ,j,k), flow%q(:,i  ,j,k), flow%qp(:,:,i  ,j,k), &
                  flow%u(:,i+1,j,k), flow%q(:,i+1,j,k), flow%qp(:,:,i+1,j,k), &
-                 mesh%nor(:,i,j,k))
+                 mesh%nor(:,i,j,k), flow%dist(1,i,j,k))
        g = yflux(flow%u(:,i,j  ,k), flow%q(:,i,j  ,k), flow%qp(:,:,i,j  ,k), &
                  flow%u(:,i,j+1,k), flow%q(:,i,j+1,k), flow%qp(:,:,i,j+1,k), &
-                 mesh%nor(:,i,j,k))
+                 mesh%nor(:,i,j,k), flow%dist(1,i,j,k))
        h = zflux(flow%u(:,i,j,k  ), flow%q(:,i,j,k  ), flow%qp(:,:,i,j,k  ), &
                  flow%u(:,i,j,k+1), flow%q(:,i,j,k+1), flow%qp(:,:,i,j,k+1), &
-                 mesh%nor(:,i,j,k))
+                 mesh%nor(:,i,j,k), flow%dist(1,i,j,k))
 
        ! And accumulate them into the residual
        
@@ -207,11 +207,11 @@ contains
     do j = 1, mesh%ncj
     do i = 1, mesh%nci
 
-       mesh%dt(1:5,i,j,k) = 0.125d0*mesh%dx(1,i,j,k) / lambda(flow%u(1:5,i,j,k))
+       mesh%dt(1:5,i,j,k) = 0.095d0*mesh%dx(1,i,j,k) / lambda(flow%u(1:5,i,j,k))
        
        ! Tripling timestep for the wall distance calculations
 
-       mesh%dt(6:9,i,j,k) = 0.125d0*mesh%dx(1,i,j,k) /1.0d0
+       !mesh%dt(6:9,i,j,k) = 70.000d0*mesh%dx(1,i,j,k) /1.0d0
 
     end do
     end do
@@ -235,9 +235,9 @@ contains
     do i = 1, mesh%nci
 
        flow%u(1:5,i,j,k) = flow%u(1:5,i,j,k) + mesh%dt(1:5,i,j,k) * flow%res(1:5,i,j,k) / mesh%vol(1,i,j,k)
-       flow%u(6:9,i,j,k) = flow%u(6:9,i,j,k) + mesh%dt(6:9,i,j,k) * flow%res(6:9,i,j,k) / mesh%vol(1,i,j,k)
+      ! flow%u(6:9,i,j,k) = flow%u(6:9,i,j,k) + mesh%dt(6:9,i,j,k) * flow%res(6:9,i,j,k) / mesh%vol(1,i,j,k)
       ! flow%u(1:5,i,j,k) = flow%u(1:5,i,j,k) + 0.0000005d0 * flow%res(1:5,i,j,k) / mesh%vol(1,i,j,k)
-      ! flow%u(6:9,i,j,k) =flow%u(6:9,i,j,k) +0.0000405d0 * flow%res(6:9,i,j,k) / mesh%vol(1,i,j,k)
+       flow%u(6:9,i,j,k) =flow%u(6:9,i,j,k) +0.0000250d0 * flow%res(6:9,i,j,k) / mesh%vol(1,i,j,k)
     end do
     end do
     end do
@@ -317,6 +317,45 @@ contains
 
   end subroutine work_sources
 
+  !*******************************************************************
+  !*******************************************************************
+
+  subroutine work_maxres()
+
+    ! Declare Variables
+
+       
+    ! Loop over all the terms and obtain maximum residual value
+  
+    flow%maxres(1) = 0d0
+    flow%maxres(2) = 0d0
+    flow%maxres(3) = 0d0
+    flow%maxres(4) = 0d0
+    flow%maxres(5) = 0d0
+    flow%maxres(6) = 0d0
+    flow%maxres(7) = 0d0
+    flow%maxres(8) = 0d0
+    flow%maxres(9) = 0d0
+  
+    do k=2, mesh%nck-1
+    do j=2, mesh%ncj-1
+    do i=2, mesh%nci-1
+
+   flow%maxres(1) = max(flow%maxres(1),abs(flow%res(1,i,j,k)))
+   flow%maxres(2) = max(flow%maxres(2),abs(flow%res(2,i,j,k)))
+   flow%maxres(3) = max(flow%maxres(3),abs(flow%res(3,i,j,k)))
+   flow%maxres(4) = max(flow%maxres(4),abs(flow%res(4,i,j,k)))
+   flow%maxres(5) = max(flow%maxres(5),abs(flow%res(5,i,j,k)))
+   flow%maxres(6) = max(flow%maxres(6),abs(flow%res(6,i,j,k)))
+   flow%maxres(7) = max(flow%maxres(7),abs(flow%res(7,i,j,k)))
+   flow%maxres(8) = max(flow%maxres(8),abs(flow%res(8,i,j,k)))
+   flow%maxres(9) = max(flow%maxres(9),abs(flow%res(9,i,j,k)))
+
+    end do
+    end do
+    end do
+
+  end subroutine work_maxres
 
 end module work_module
 

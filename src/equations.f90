@@ -21,8 +21,7 @@ module equations_module
   ! Declare modules
   
   use precision
-
-
+  
   implicit none
 
   ! Set the number of equations - increased form 5 to 9 for wall distance computation
@@ -121,7 +120,7 @@ contains
   !*******************************************************************
   !*******************************************************************
 
-  function xflux(uL, qL, qpL, uR, qR, qpR, n) result(f)
+  function xflux(uL, qL, qpL, uR, qR, qpR, n, dist) result(f)
 
     implicit none
 
@@ -139,7 +138,7 @@ contains
 
     ! Turbulence variables
 
-    real(kind=RP) :: L, mut, rij(3,3), qtx, sumsmij
+    real(kind=RP) :: L, mut, rij(3,3), qtx, sumsmij, dist(1)
 
     ! Set the wave speeds in the relevant direction (Rusanov)
 
@@ -159,7 +158,7 @@ contains
 
     smax = abs(vall) + amix
     
-    smth = 0.90d0
+    smth = 0.50d0
 
     ! Set the fluxes
 
@@ -188,7 +187,7 @@ contains
     end do
     end do
     
-    ! Get the mean modified rate of strain tensor
+    ! Get the mean modifed rate of strain tensor
 
     do j = 1, 3
     do i = 1, 3
@@ -219,11 +218,10 @@ contains
     ! Turbulence modelling
 
     ! Set the length scale
-
-    L = pi / 4
+     
+    L = 0.25 * pi
+    !L = min(0.41*dist(1), 0.25 *pi)
     
-    ! L = 0.41 *flow%d - to be developed later
-
     ! Compute turbulent eddy viscosity
 
     sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
@@ -245,10 +243,10 @@ contains
     ! Add on the viscous terms + zero equation turbulence terms
 
     f(1) = f(1)
-    f(2) = f(2) !- tij(1,1) - rij(1,1)
-    f(3) = f(3) !- tij(1,2) - rij(1,2)
-    f(4) = f(4) !- tij(1,3) - rij(1,3)
-    f(5) = f(5) !- q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx + qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
+    f(2) = f(2) - tij(1,1) !- rij(1,1)
+    f(3) = f(3) - tij(1,2) !- rij(1,2)
+    f(4) = f(4) - tij(1,3) !- rij(1,3)
+    f(5) = f(5) - q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx !+ qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
     f(6) = f(6)
     f(7) = f(7)
     f(8) = f(8)
@@ -269,7 +267,7 @@ contains
   !*******************************************************************
   !*******************************************************************
 
-  function yflux(uL, qL, qpL, uR, qR, qpR, n) result(g)
+  function yflux(uL, qL, qpL, uR, qR, qpR, n, dist) result(g)
 
     implicit none
 
@@ -287,7 +285,7 @@ contains
 
     ! Turbulence variables
 
-    real(kind=RP) :: L, mut, rij(3,3), qty, sumsmij
+    real(kind=RP) :: L, mut, rij(3,3), qty, sumsmij, dist(1)
 
     ! Set the wave speeds in the relevant direction (Rusanov)
 
@@ -307,7 +305,7 @@ contains
 
     smax = abs(vall) + amix
 
-    smth = 0.90d0
+    smth = 0.50d0
 
     ! Set the fluxes
 
@@ -367,9 +365,8 @@ contains
 
     ! Set the length scale
 
-    L = pi / 4
-    
-    ! L = 0.41 * d - to be developed later
+    L = 0.25 * pi
+   ! L = min(0.41 * dist(1), 0.25 *pi)
 
     ! Compute turbulent eddy viscosity
 
@@ -391,11 +388,11 @@ contains
 
     ! Add on the viscous terms + turbulent stresses
 
-    g(1) = g(1)!
-    g(2) = g(2) !- tij(2,1) - rij(2,1)
-    g(3) = g(3) !- tij(2,2) - rij(2,2)
-    g(4) = g(4) !- tij(2,3) - rij(2,3)
-    g(5) = g(5) !- q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy + qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
+    g(1) = g(1)
+    g(2) = g(2) - tij(2,1) !- rij(2,1)
+    g(3) = g(3) - tij(2,2) !- rij(2,2)
+    g(4) = g(4) - tij(2,3) !- rij(2,3)
+    g(5) = g(5) - q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy !+ qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
     g(6) = g(6)
     g(7) = g(7)
     g(8) = g(8)
@@ -412,7 +409,7 @@ contains
   !*******************************************************************
   !*******************************************************************
 
-  function zflux(uL, qL, qpL, uR, qR, qpR, n) result(h)
+  function zflux(uL, qL, qpL, uR, qR, qpR, n, dist) result(h)
 
     implicit none
 
@@ -430,7 +427,7 @@ contains
 
     ! Turbulence variables
 
-    real(kind=RP) :: L, mut, rij(3,3), qtz, sumsmij
+    real(kind=RP) :: L, mut, rij(3,3), qtz, sumsmij, dist(1)
 
     ! Set the wave speeds in the relevant direction (Rusanov)
 
@@ -450,7 +447,7 @@ contains
 
     smax = abs(vall) + amix
 
-    smth = 0.90d0
+    smth = 0.50d0
 
     ! Set the fluxes
 
@@ -510,9 +507,8 @@ contains
 
     ! Set the length scale
 
-    L = pi / 4
-    
-    ! L = 0.41 * d - to be developed later
+    L = 0.25 * pi
+    !L = min( 0.41 * dist(1), 0.25 * pi)
 
     ! Compute turbulent eddy viscosity
 
@@ -534,11 +530,11 @@ contains
 
     ! Add on the viscous terms
 
-    h(1) = h(1)!
-    h(2) = h(2) !- tij(3,1) - rij(3,1)
-    h(3) = h(3) !- tij(3,2) - rij(3,2)
-    h(4) = h(4) !- tij(3,3) - rij(3,3)
-    h(5) = h(5) !- q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz + qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
+    h(1) = h(1)
+    h(2) = h(2) - tij(3,1) !- rij(3,1)
+    h(3) = h(3) - tij(3,2) !- rij(3,2)
+    h(4) = h(4) - tij(3,3) !- rij(3,3)
+    h(5) = h(5) - q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz !+ qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
     h(6) = h(6)
     h(7) = h(7)
     h(8) = h(8)
@@ -661,7 +657,8 @@ contains
     ! Set the back pressure
 
     pb = 100000d0
-
+    !pb = 108727d0
+    
     ! Give them more convenient names
 
     ri = uIn(1)

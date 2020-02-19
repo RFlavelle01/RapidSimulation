@@ -44,7 +44,7 @@ program rectilinear
   ! START OF THE TIME STEPPING LOOP !
   ! ******************************* !
   
-  do it = 1, 5000
+  do it = 1, 60000
 
      ! Apply the BCs
 
@@ -58,6 +58,10 @@ program rectilinear
 
      call work_gradients()
 
+     ! Compute the nearest wall distance d
+     
+     call work_walldist()
+
      ! Compute the intercell fluxes
 
      call work_fluxes()
@@ -69,10 +73,6 @@ program rectilinear
      ! Compute any source terms
 
      call work_sources()
-
-     ! Compute the nearest wall distance d
-     
-     call work_walldist()
       
      ! Set the time steps
 
@@ -82,10 +82,19 @@ program rectilinear
 
      call work_update()
 
-     ! Print the timestep number
+     !Record the Max residual
 
-     write(6,*) it
+     call work_maxres()
+
+     ! Print the timestep number
      
+     if (mod(it,10)==0) then 
+
+     write(6,*) it, flow%maxres(2), flow%maxres(3), flow%maxres(4), flow%maxres(6), flow%res(3,80,40,40), flow%res(6,80,40,40)
+     !write(6,*) it, flow%d(1,20,20,50), flow%d(2,20,20,50), flow%dist(1,20,20,50)
+        
+     end if
+
   end do
   
   ! ******************************* !
@@ -97,12 +106,16 @@ program rectilinear
 
   call write_plot3d()
   
+  call read_restart()
+  
+  call write_restart()
+
   do k=1, mesh%nck
   do j=1, mesh%ncj
   do i=1, mesh%nci
 
      !write(19,*) mesh%x(1,i,j,k), mesh%x(2,i,j,k), mesh%x(3,i,j,k), flow%inter(1,i,j,k), flow%ibm(1,i,j,k) 
-     write(19, *) flow%inter(1,i,j,k), flow%ibm(1,i,j,k)
+     !write(19, *) flow%inter(1,i,j,k), flow%ibm(1,i,j,k)
 
   end do
   end do

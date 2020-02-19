@@ -41,6 +41,7 @@ module flow_module
      ! Array to store the residuals
 
      real   (kind=RP), allocatable :: res(:,:,:,:)
+     real   (kind=RP), allocatable :: maxres(:)
 
      ! Array to store the gradients of the primitives
 
@@ -61,6 +62,8 @@ module flow_module
      !Array to store wall distance
      
      real (kind=RP), allocatable :: d(:,:,:,:)
+     
+     real (kind=RP), allocatable :: dist(:,:,:,:)
 
      ! Array to store interpolation technique
 
@@ -86,6 +89,7 @@ contains
 
     allocate(flow%res(npdes,    mesh%nci, mesh%ncj, mesh%nck))
     allocate(flow%qp( npdes, 3, mesh%nci, mesh%ncj, mesh%nck))
+    allocate(flow%maxres(npdes))
    
     ! ibm and forcing allocation
 
@@ -96,7 +100,8 @@ contains
     ! wall distance calculation
 
     allocate(flow%d(2, mesh%nci,mesh%ncj,mesh%nck))
-        
+    allocate(flow%dist(1, mesh%nci,mesh%ncj,mesh%nck))
+    
     ! Interpolation techniques
     allocate (flow%inter(1, mesh%nci,mesh%ncj,mesh%nck))
     
@@ -324,9 +329,9 @@ end subroutine force_constructor
     
     real(kind=rp) :: Y
     
-    do k= 1, mesh%nck
-    do j= 1, mesh%ncj
-    do i= 1, mesh%nci
+   do k= 1, mesh%nck
+   do j= 1, mesh%ncj
+   do i= 1, mesh%nci
   
        Y =  sqrt(flow%u(7,i,j,k)**2 + flow%u(8,i,j,k)**2 + flow%u(9,i,j,k)**2 + 2d0*flow%u(6,i,j,k))
      
@@ -334,6 +339,8 @@ end subroutine force_constructor
     
        flow%d(2,i,j,k) = -sqrt(flow%u(7,i,j,k)**2 + flow%u(8,i,j,k)**2 + flow%u(9,i,j,k)**2) - Y
 
+       flow%dist(1,i,j,k) = min(abs(flow%d(1,i,j,k)), abs(flow%d(2,i,j,k)))
+       
     end do
     end do
     end do
