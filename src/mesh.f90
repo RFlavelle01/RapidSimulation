@@ -56,6 +56,11 @@ module mesh_module
 
      real    (kind=RP), allocatable :: dx(:,:,:,:), dt(:,:,:,:)
 
+     ! IBM mesh switch
+
+     real    (kind=RP), allocatable :: ibm(:,:,:,:)
+     
+
   end type mesh_type
 
   ! Declare a mesh
@@ -125,7 +130,8 @@ contains
     allocate(mesh%dx(1,mesh%nci,mesh%ncj,mesh%nck))
 
     allocate(mesh%dt(1,mesh%nci,mesh%ncj,mesh%nck))
-
+    allocate(mesh%ibm(1,mesh%nci,mesh%ncj,mesh%nck))
+    
     ! Put data into cell-centred format
 
     do k = 1, mesh%nck
@@ -190,7 +196,45 @@ contains
 
     return
 
+  close(20)
+
   end subroutine mesh_constructor
+
+  subroutine meshcentered_points()
+
+   open(unit=20, file='meshcentre.dat')
+   
+    do k = 1, mesh%nck
+    do j = 1, mesh%ncj
+    do i = 1, mesh%nci
+
+   write(20,*) mesh%x(1,i,j,k), mesh%x(2,i,j,k), mesh%x(3,i,j,k)
+
+    end do
+    end do
+    end do
+
+    close(20)
+
+    end subroutine meshcentered_points
+
+    subroutine IBMmeshread()
+
+    open(unit=21, file='Fuselage.dat')
+
+    do k = 1, mesh%nck
+    do j = 1, mesh%ncj
+    do i = 1, mesh%nci
+
+   read(21,*) mesh%ibm(1,i,j,k)
+
+    end do
+    end do
+    end do
+    
+    close(21)
+
+  end subroutine IBMmeshread
 
 end module mesh_module
 

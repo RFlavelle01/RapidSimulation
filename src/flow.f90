@@ -64,6 +64,8 @@ module flow_module
      real (kind=RP), allocatable :: d(:,:,:,:)
      
      real (kind=RP), allocatable :: dist(:,:,:,:)
+     
+     !real (kind=RP), allocatable :: MAXD(:,:,:,:)
 
      ! Array to store interpolation technique
 
@@ -101,7 +103,8 @@ contains
 
     allocate(flow%d(2, mesh%nci,mesh%ncj,mesh%nck))
     allocate(flow%dist(1, mesh%nci,mesh%ncj,mesh%nck))
-    
+    !allocate(flow%MAXD(1,mesh%nci,mesh%ncj,mesh%nck)
+
     ! Interpolation techniques
     allocate (flow%inter(1, mesh%nci,mesh%ncj,mesh%nck))
     
@@ -166,10 +169,10 @@ contains
 
        ! pde numbers 6 to 9 relate to wall distance calculation
 
-       flow%u(6,i,j,k) = u
-       flow%u(7,i,j,k) = c
-       flow%u(8,i,j,k) = q
-       flow%u(9,i,j,k) = r
+       !flow%u(6,i,j,k) = u
+       !flow%u(7,i,j,k) = c
+       !flow%u(8,i,j,k) = q
+       !flow%u(9,i,j,k) = r
 
     end do
     end do
@@ -208,11 +211,11 @@ contains
 
       if ( r2 <= rc**2) then
           
-          flow%ibm(1,i,j,k) = 1.0d0
+          mesh%ibm(1,i,j,k) = 1.0d0
        
       else
       
-          flow%ibm(1,i,j,k) = 0.0d0
+          mesh%ibm(1,i,j,k) = 0.0d0
        
       end if
       
@@ -226,50 +229,8 @@ end subroutine ibm_constructor
 
 !*******************************************************************
 !*******************************************************************
-     
-    subroutine interpolation_constructor()
-      
-      ! Declare variables
-      
-      real(kind=RP) :: delta, r2, rc
 
-      do k = 1, mesh%nck
-      do j = 1, mesh%ncj
-      do i = 1, mesh%nci
-      
-      ! Set a value for delta on to the IBM constructor to attain the outer value of 
-
-      delta = 0.005d0
-
-      ! Get the coordinates
-
-      r2 = mesh%x(1,i,j,k)**2 + mesh%x(2,i,j,k)**2 + mesh%x(3,i,j,k)**2
-
-      ! Test for the critical radius 1/4 PI + Delta
-
-      rc = 0.5d0*atan(1d0) + delta
-
-      if ( r2 <= rc**2) then
-
-      flow%inter(1,i,j,k) = 1.0d0
-
-      else
-
-      flow%inter(1,i,j,k) = 0.0d0
-      
-      end if
- 
-      end do
-      end do
-      end do
-      
-      end subroutine interpolation_constructor
-      
-!*******************************************************************
-!*******************************************************************
-
-
-   subroutine force_constructor
+   subroutine force_constructor()
 
    !Declare Variables
      
@@ -300,19 +261,19 @@ end subroutine ibm_constructor
    flow%ferror(4,i,j,k) = flow%ferror(4,i,j,k) + (flow%u(4,i,j,k) / flow%u(1,i,j,k) - vel)
    
    ! Wall distance forcing error
-   flow%ferror(6,i,j,k) = flow%ferror(6,i,j,k) + (flow%u(6,i,j,k) - 0d0)
+   !flow%ferror(6,i,j,k) = flow%ferror(6,i,j,k) + (flow%u(6,i,j,k) - 0d0)
 
    !Calculate the force to be applied     
 
-   flow%force(2,i,j,k) = (alpha * flow%ferror(2,i,j,k) + beta * (flow%u(2,i,j,k) / flow%u(1,i,j,k) - vel)) * flow%ibm(1,i,j,k)
-   flow%force(3,i,j,k) = (alpha * flow%ferror(3,i,j,k) + beta * (flow%u(3,i,j,k) / flow%u(1,i,j,k) - vel)) * flow%ibm(1,i,j,k)
-   flow%force(4,i,j,k) = (alpha * flow%ferror(4,i,j,k) + beta * (flow%u(4,i,j,k) / flow%u(1,i,j,k) - vel)) * flow%ibm(1,i,j,k)
+   flow%force(2,i,j,k) = (alpha * flow%ferror(2,i,j,k) + beta * (flow%u(2,i,j,k) / flow%u(1,i,j,k) - vel)) * mesh%ibm(1,i,j,k)
+   flow%force(3,i,j,k) = (alpha * flow%ferror(3,i,j,k) + beta * (flow%u(3,i,j,k) / flow%u(1,i,j,k) - vel)) * mesh%ibm(1,i,j,k)
+   flow%force(4,i,j,k) = (alpha * flow%ferror(4,i,j,k) + beta * (flow%u(4,i,j,k) / flow%u(1,i,j,k) - vel)) * mesh%ibm(1,i,j,k)
    
    ! Wall distance boundary force
 
    ! Set u to = 0 by applying a feedback force
 
-   flow%force(6,i,j,k) = (alpha * flow%ferror(6,i,j,k) + beta * (flow%u(6,i,j,k) / flow%u(1,i,j,k) - 0)) *flow%ibm(1,i,j,k)
+   !flow%force(6,i,j,k) = (alpha * flow%ferror(6,i,j,k) + beta * (flow%u(6,i,j,k) / flow%u(1,i,j,k) - 0)) *mesh%ibm(1,i,j,k)
      
    end do
    end do
@@ -323,7 +284,7 @@ end subroutine force_constructor
  !*******************************************************************
  !*******************************************************************
 
-  subroutine work_walldist
+  subroutine work_walldist()
    
     ! Declare Variables
     
@@ -338,14 +299,98 @@ end subroutine force_constructor
        flow%d(1,i,j,k) = -sqrt(flow%u(7,i,j,k)**2 + flow%u(8,i,j,k)**2 + flow%u(9,i,j,k)**2) + Y
     
        flow%d(2,i,j,k) = -sqrt(flow%u(7,i,j,k)**2 + flow%u(8,i,j,k)**2 + flow%u(9,i,j,k)**2) - Y
-
+ 
        flow%dist(1,i,j,k) = min(abs(flow%d(1,i,j,k)), abs(flow%d(2,i,j,k)))
+
+      
+       if (flow%dist(1,i,j,k) == flow%dist(1,i,j,1)) then
+
+       flow%dist(1,i,j,k) = 0d0 
+
+       end if
+          
+      
+       if (flow%dist(1,i,j,k) == flow%dist(1,i,j,mesh%nck)) then
+          
+       flow%dist(1,i,j,k) = 0d0 
        
+       end if
+
+       if (flow%dist(1,i,j,k) == flow%dist(1,i,1,k)) then
+
+       flow%dist(1,i,j,k) = 0d0 
+
+       end if
+          
+      
+       if (flow%dist(1,i,j,k) == flow%dist(1,i,mesh%ncj,k)) then
+          
+       flow%dist(1,i,j,k) = 0d0 
+       
+       end if
+
+       if (flow%dist(1,i,j,k) == flow%dist(1,1,j,k)) then
+
+       flow%dist(1,i,j,k) = flow%dist(1,i+1,j,k) 
+
+       end if
+          
+      
+       if (flow%dist(1,i,j,k) == flow%dist(1,1,j,mesh%nci)) then
+          
+       flow%dist(1,i,j,k) = flow%dist(1,i-1,j,k) 
+       
+       end if
+
+
     end do
     end do
     end do
 
   end subroutine work_walldist
+
+!********************************************************************
+!********************************************************************
+
+  subroutine write_walldistance()
+
+    open (unit=22, file = 'WalldistanceFuselage.dat')
+
+    do k = 1, mesh%nck
+    do j = 1, mesh%ncj
+    do i = 1, mesh%nci
+
+       write(22,*) flow%dist(1,i,j,k)
+
+    end do
+    end do
+    end do
+
+    close(22)
+
+  end subroutine write_walldistance
+
+!********************************************************************
+!********************************************************************
+
+  subroutine Distance_Read()
+
+  open(unit=24, file='WalldistanceSphere.dat')
+
+  
+  do k = 1, mesh%nck
+  do j = 1, mesh%ncj
+  do i = 1, mesh%nci
+
+     read(24,*) flow%dist(1,i,j,k)
+
+  end do
+  end do
+  end do
+
+  close(24)
+  
+  end subroutine Distance_Read
 
   end module flow_module
 

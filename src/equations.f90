@@ -21,12 +21,13 @@ module equations_module
   ! Declare modules
   
   use precision
-  
+ 
+
   implicit none
 
   ! Set the number of equations - increased form 5 to 9 for wall distance computation
 
-  integer(kind=IP), parameter :: npdes = 9
+  integer(kind=IP), parameter :: npdes = 5
 
   ! Set some major flow parameters
 
@@ -70,10 +71,10 @@ contains
 
     !Wall distances
 
-    q(6) = u(6)
-    q(7) = u(7)
-    q(8) = u(8)
-    q(9) = u(9)
+    !q(6) = u(6)
+    !q(7) = u(7)
+    !q(8) = u(8)
+    !q(9) = u(9)
 
     ! Return cleanly
 
@@ -136,7 +137,7 @@ contains
 
     integer(kind=IP) :: ipde, i, j
 
-    ! Turbulence variables
+    ! turbulence variables
 
     real(kind=RP) :: L, mut, rij(3,3), qtx, sumsmij, dist(1)
 
@@ -171,10 +172,10 @@ contains
 
     !Wall distance
 
-    f(6) = -(0.5d0*(qL(7)+qR(7)))
-    f(7) = -0.5d0*(qL(6)+qR(6))
-    f(8) = 0d0
-    f(9) = 0d0
+    !f(6) = -(0.5d0*(qL(7)+qR(7)))
+    !f(7) = -0.5d0*(qL(6)+qR(6))
+    !f(8) = 0d0
+    !f(9) = 0d0
 
     ! Get the mean gradients
 
@@ -187,7 +188,7 @@ contains
     end do
     end do
     
-    ! Get the mean modifed rate of strain tensor
+    ! Get the mean modified rate of strain tensor
 
     do j = 1, 3
     do i = 1, 3
@@ -218,39 +219,43 @@ contains
     ! Turbulence modelling
 
     ! Set the length scale
-     
-    L = 0.25 * pi
-    !L = min(0.41*dist(1), 0.25 *pi)
+
+    !L = 0.25 * pi
     
+    !L = 0.771d0
+
+    L = min(0.41*dist(1), 0.25 * pi)
+
     ! Compute turbulent eddy viscosity
 
-    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
-    
-    mut  = q(1) * sqrt( L**2 * 2 *sumsmij)
+    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 + smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
+
+    mut = q(1) *sqrt(L**2 *2 * sumsmij)
 
     ! Calculate the Reynolds stress tensor
-    
+
     do j = 1, 3
     do i = 1, 3
        rij(i,j) = 2 * mut * smij(i,j)
     end do
     end do
-    
-    ! Find the turbulent diffusion of heat
-    
-    qtx = -(mut / pr) * tx
 
-    ! Add on the viscous terms + zero equation turbulence terms
+    ! Find the turbulent diffusion of heat
+
+    qtx = -(mut / pr) *tx
+    
+
+    ! Add on the viscous terms
 
     f(1) = f(1)
-    f(2) = f(2) - tij(1,1) !- rij(1,1)
-    f(3) = f(3) - tij(1,2) !- rij(1,2)
-    f(4) = f(4) - tij(1,3) !- rij(1,3)
-    f(5) = f(5) - q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx !+ qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
-    f(6) = f(6)
-    f(7) = f(7)
-    f(8) = f(8)
-    f(9) = f(9)
+    f(2) = f(2) - tij(1,1) - rij(1,1)
+    f(3) = f(3) - tij(1,2) - rij(1,2)
+    f(4) = f(4) - tij(1,3) - rij(1,3)
+    f(5) = f(5) - q(2)*tij(1,1) - q(3)*tij(1,2) - q(4)*tij(1,3) + qx + qtx - q(2)*rij(1,1) - q(3)*rij(1,2) - q(4)*rij(1,3)
+    !f(6) = f(6)
+    !f(7) = f(7)
+    !f(8) = f(8)
+    !f(9) = f(9)
 
     ! And dot with the normals
 
@@ -284,7 +289,7 @@ contains
     integer(kind=IP) :: ipde, i, j
 
     ! Turbulence variables
-
+    
     real(kind=RP) :: L, mut, rij(3,3), qty, sumsmij, dist(1)
 
     ! Set the wave speeds in the relevant direction (Rusanov)
@@ -317,10 +322,10 @@ contains
     
     !Wall distances 
    
-    g(6) = -(0.5d0*(qL(8)+qR(8)))
-    g(7) = 0d0
-    g(8) = -0.5d0*(qL(6)+qR(6))
-    g(9) = 0d0
+    !g(6) = -(0.5d0*(qL(8)+qR(8)))
+    !g(7) = 0d0
+    !g(8) = -0.5d0*(qL(6)+qR(6))
+    !g(9) = 0d0
  
     ! Get the mean gradients
 
@@ -361,42 +366,45 @@ contains
 
     qy = -(mul / pr) * ty
 
-    ! Turbulence modelling
 
     ! Set the length scale
 
-    L = 0.25 * pi
-   ! L = min(0.41 * dist(1), 0.25 *pi)
+    !L = 0.25 * pi
+
+    !L = 0.771d0
+
+    L = min(0.41*dist(1), 0.25 * pi)
 
     ! Compute turbulent eddy viscosity
 
-    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
+    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 + smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
 
-    mut = q(1) * sqrt(L**2 * 2 * sumsmij)
+    mut = q(1) *sqrt(L**2 *2 * sumsmij)
 
     ! Calculate the Reynolds stress tensor
-    
+
     do j = 1, 3
     do i = 1, 3
        rij(i,j) = 2 * mut * smij(i,j)
     end do
     end do
-    
-    ! Find the turbulent diffusion of heat
-    
-    qty = -(mut / pr) * ty
 
-    ! Add on the viscous terms + turbulent stresses
+    ! Find the turbulent diffusion of heat
+
+    qty = -(mut / pr) *ty
+    
+
+    ! Add on the viscous terms
 
     g(1) = g(1)
-    g(2) = g(2) - tij(2,1) !- rij(2,1)
-    g(3) = g(3) - tij(2,2) !- rij(2,2)
-    g(4) = g(4) - tij(2,3) !- rij(2,3)
-    g(5) = g(5) - q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy !+ qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
-    g(6) = g(6)
-    g(7) = g(7)
-    g(8) = g(8)
-    g(9) = g(9)
+    g(2) = g(2) - tij(2,1) - rij(2,1)
+    g(3) = g(3) - tij(2,2) - rij(2,2)
+    g(4) = g(4) - tij(2,3) - rij(2,3)
+    g(5) = g(5) - q(2)*tij(2,1) - q(3)*tij(2,2) - q(4)*tij(2,3) + qy + qty - q(2)*rij(2,1) - q(3)*rij(2,2) - q(4)*rij(2,3)
+    !g(6) = g(6)
+    !g(7) = g(7)
+    !g(8) = g(8)
+    !g(9) = g(9)
 
     ! And dot with the normals
 
@@ -459,10 +467,10 @@ contains
     
     !Wall distances
     
-    h(6) = -(0.5d0*(qL(9)+qR(9)))
-    h(7) = 0d0
-    h(8) = 0d0
-    h(9) = -0.5d0*(qL(6)+qR(6))
+    !h(6) = -(0.5d0*(qL(9)+qR(9)))
+    !h(7) = 0d0
+    !h(8) = 0d0
+    !h(9) = -0.5d0*(qL(6)+qR(6))
     
     ! Get the mean gradients
 
@@ -503,42 +511,43 @@ contains
 
     qz = -(mul / pr) * tz
 
-    ! Turbulence modelling
-
     ! Set the length scale
 
-    L = 0.25 * pi
-    !L = min( 0.41 * dist(1), 0.25 * pi)
+    !L = 0.25 * pi
+
+    !L = 0.771d0
+
+    L = min(0.41*dist(1), 0.25 * pi)
 
     ! Compute turbulent eddy viscosity
 
-    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 *smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
+    sumsmij = (smij(1,1)**2 + smij(2,1)**2 + smij(1,2)**2 + smij(2,2)**2 + smij(3,1)**2 + smij(3,2)**2 + smij(3,3)**2)
 
-    mut = q(1) * sqrt(L**2 * 2 * sumsmij)
+    mut = q(1) *sqrt(L**2 *2 * sumsmij)
 
     ! Calculate the Reynolds stress tensor
-    
+
     do j = 1, 3
     do i = 1, 3
        rij(i,j) = 2 * mut * smij(i,j)
     end do
     end do
-    
-    ! Find the turbulent diffusion of heat
-    
-    qtz = -(mut / pr) * tz
 
+    ! Find the turbulent diffusion of heat
+
+    qtz = -(mut / pr) *tz
+    
     ! Add on the viscous terms
 
     h(1) = h(1)
-    h(2) = h(2) - tij(3,1) !- rij(3,1)
-    h(3) = h(3) - tij(3,2) !- rij(3,2)
-    h(4) = h(4) - tij(3,3) !- rij(3,3)
-    h(5) = h(5) - q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz !+ qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
-    h(6) = h(6)
-    h(7) = h(7)
-    h(8) = h(8)
-    h(9) = h(9)
+    h(2) = h(2) - tij(3,1) - rij(3,1)
+    h(3) = h(3) - tij(3,2) - rij(3,2)
+    h(4) = h(4) - tij(3,3) - rij(3,3)
+    h(5) = h(5) - q(2)*tij(3,1) - q(3)*tij(3,2) - q(4)*tij(3,3) + qz + qtz -q(2)*rij(3,1) - q(3)*rij(3,2) - q(4)*rij(3,3)
+    !h(6) = h(6)
+    !h(7) = h(7)
+    !h(8) = h(8)
+    !h(9) = h(9)
 
     ! And dot with the normals
 
@@ -627,10 +636,10 @@ contains
     
     !Wall distances
  
-    uBn(6) = -uIn(6)
-    uBn(7) = uIn(7)
-    uBn(8) = uIn(8)
-    uBn(9) = uIn(9)
+    !uBn(6) = -uIn(6)
+    !uBn(7) = uIn(7)
+    !uBn(8) = uIn(8)
+    !uBn(9) = uIn(9)
 
     ! Return cleanly
 
@@ -656,9 +665,9 @@ contains
 
     ! Set the back pressure
 
-    pb = 100000d0
-    !pb = 108727d0
-    
+    pb = 108726.930d0
+    !pb = 100000d0
+
     ! Give them more convenient names
 
     ri = uIn(1)
@@ -685,10 +694,10 @@ contains
     
     ! Wall distances
 
-    uBn(6) = -uIn(6)
-    uBn(7) = uIn(7)
-    uBn(8) = uIn(8)
-    uBn(9) = uIn(9)
+    !uBn(6) = -uIn(6)
+    !uBn(7) = uIn(7)
+    !uBn(8) = uIn(8)
+    !uBn(9) = uIn(9)
 
     ! Return cleanly
    
@@ -746,10 +755,10 @@ contains
 
     ! Wall distances
 
-    uBn(6) = -uIn(6)
-    uBn(7) = uIn(7)
-    uBn(8) = uIn(8)
-    uBn(9) = uIn(9)
+    !uBn(6) = -uIn(6)
+    !uBn(7) = uIn(7)
+    !uBn(8) = uIn(8)
+    !uBn(9) = uIn(9)
 
   end function bc_type_c
 
@@ -773,10 +782,10 @@ contains
     s(5) = 0    *vol(1)
     
     !Wall distances
-    s(6) = (1 + f(6))*vol(1)
-    s(7) = -q(7)*vol(1)
-    s(8) = -q(8)*vol(1)
-    s(9) = -q(9)*vol(1)
+    !s(6) = (1 + f(6))*vol(1)
+    !s(7) = -q(7)*vol(1)
+    !s(8) = -q(8)*vol(1)
+    !s(9) = -q(9)*vol(1)
 
     ! Return
 

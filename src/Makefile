@@ -2,8 +2,8 @@
 FC=gfortran
 
 # Set the compiler flags
-#FCFLAGS= -O3 -Wall -fcheck=all -Wno-unused-dummy-argument
-FCFLAGS= -O3 -Wall -Wno-unused-dummy-argument
+FCFLAGS= -O3 -Wall -fcheck=all -Wno-unused-dummy-argument
+#FCFLAGS= -O3 -Wall -Wno-unused-dummy-argument
 
 # Set up any libraries needed
 LFLAGS=

@@ -40,11 +40,19 @@ program rectilinear
 
   call ibm_constructor()
 
+  !call IBMmeshread()
+
+  call Distance_Read()
+
+  ! Output the mesh centered points
+
+  call meshcentered_points
+
   ! ******************************* !
   ! START OF THE TIME STEPPING LOOP !
   ! ******************************* !
   
-  do it = 1, 60000
+  do it = 1, 100 
 
      ! Apply the BCs
 
@@ -60,15 +68,15 @@ program rectilinear
 
      ! Compute the nearest wall distance d
      
-     call work_walldist()
-
+     !call work_walldist()
+    
      ! Compute the intercell fluxes
 
      call work_fluxes()
 
      ! Call IBM force constructor 
      
-     call force_constructor
+     call force_constructor()
 
      ! Compute any source terms
 
@@ -90,8 +98,7 @@ program rectilinear
      
      if (mod(it,10)==0) then 
 
-     write(6,*) it, flow%maxres(2), flow%maxres(3), flow%maxres(4), flow%maxres(6), flow%res(3,80,40,40), flow%res(6,80,40,40)
-     !write(6,*) it, flow%d(1,20,20,50), flow%d(2,20,20,50), flow%dist(1,20,20,50)
+     write(6,*) it, flow%maxres(2), flow%maxres(3), flow%maxres(4) !, flow%maxres(6)
         
      end if
 
@@ -100,26 +107,30 @@ program rectilinear
   ! ******************************* !
   !  END OF THE TIME STEPPING LOOP  !
   ! ******************************* !
-
+  
+  write(6,*) 'plot3d'
 
   ! Plot and have a look
 
   call write_plot3d()
   
-  call read_restart()
+  !call read_restart()
   
-  call write_restart()
+  !call write_restart()
 
-  do k=1, mesh%nck
-  do j=1, mesh%ncj
-  do i=1, mesh%nci
+  !call write_walldistance()
+
+
+  !do k=1, mesh%nck
+  !do j=1, mesh%ncj
+  !do i=1, mesh%nci
 
      !write(19,*) mesh%x(1,i,j,k), mesh%x(2,i,j,k), mesh%x(3,i,j,k), flow%inter(1,i,j,k), flow%ibm(1,i,j,k) 
      !write(19, *) flow%inter(1,i,j,k), flow%ibm(1,i,j,k)
-
-  end do
-  end do
-  end do
+     !write(19,*) flow%dist(1,i,j,k)
+ ! end do
+  !end do
+  !end do
 
 end program rectilinear
 
